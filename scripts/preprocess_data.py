@@ -23,6 +23,18 @@ from src.preprocess.bandwidth import (  # noqa: E402
 )
 
 
+def worker_process_audio(
+    path_str: str,
+    cfg_dict: dict,
+    output_root_str: str,
+    dry_run: bool,
+) -> dict:
+    path = Path(path_str)
+    cfg = BandwidthConfig(**cfg_dict)
+    output_root = Path(output_root_str)
+    return process_file(path, output_root, cfg=cfg, dry_run=dry_run)
+
+
 def resolve_paths(dataset_root: Path, output_root: Optional[Path]) -> tuple[Path, Path]:
     if not dataset_root.exists():
         raise FileNotFoundError(f"Dataset root not found: {dataset_root}")
@@ -73,15 +85,12 @@ def main(
             results.append(info)
     else:
         cfg_dict = asdict(cfg)
-
-        def _worker(path_str: str) -> dict:
-            path = Path(path_str)
-            cfg_local = BandwidthConfig(**cfg_dict)
-            return process_file(path, output_root, cfg=cfg_local, dry_run=dry_run)
+        output_root_str = str(output_root.resolve())
+        args_iter = [(str(p), cfg_dict, output_root_str, dry_run) for p in audio_files]
 
         with ProcessPoolExecutor(max_workers=workers) as executor:
-            future_to_path = {executor.submit(_worker, str(p)): p for p in audio_files}
-            for future in tqdm(as_completed(future_to_path), total=len(audio_files), desc="Preprocessing audio"):
+            futures = [executor.submit(worker_process_audio, *args) for args in args_iter]
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Preprocessing audio"):
                 info = future.result()
                 results.append(info)
 
