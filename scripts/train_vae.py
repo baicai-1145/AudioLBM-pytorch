@@ -51,6 +51,10 @@ def main() -> None:
     args = parse_args()
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
+    if torch.cuda.is_available():
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+
     dataset = AudioSegmentDataset(
         AudioDatasetConfig(
             root=args.data_root,
