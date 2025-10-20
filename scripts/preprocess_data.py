@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import asdict
 from pathlib import Path
 from typing import Optional
 
@@ -48,12 +50,14 @@ def resolve_paths(dataset_root: Path, output_root: Optional[Path]) -> tuple[Path
 @click.option("--target-sr", type=int, default=48000, help="重采样目标采样率。")
 @click.option("--dry-run", is_flag=True, help="只计算带宽但不写入音频。")
 @click.option("--report-path", type=click.Path(path_type=Path), default=None, help="保存统计 JSON。")
+@click.option("--workers", type=int, default=1, show_default=True, help="并行进程数 (1 表示串行)。")
 def main(
     dataset_root: Path,
     output_root: Optional[Path],
     target_sr: int,
     dry_run: bool,
     report_path: Optional[Path],
+    workers: int,
 ) -> None:
     dataset_root, output_root = resolve_paths(dataset_root, output_root)
     cfg = BandwidthConfig(target_sr=target_sr)
@@ -63,9 +67,23 @@ def main(
     if not audio_files:
         raise RuntimeError(f"No audio files found under {dataset_root}")
 
-    for audio_path in tqdm(audio_files, desc="Preprocessing audio"):
-        info = process_file(audio_path, output_root, cfg=cfg, dry_run=dry_run)
-        results.append(info)
+    if workers <= 1:
+        for audio_path in tqdm(audio_files, desc="Preprocessing audio"):
+            info = process_file(audio_path, output_root, cfg=cfg, dry_run=dry_run)
+            results.append(info)
+    else:
+        cfg_dict = asdict(cfg)
+
+        def _worker(path_str: str) -> dict:
+            path = Path(path_str)
+            cfg_local = BandwidthConfig(**cfg_dict)
+            return process_file(path, output_root, cfg=cfg_local, dry_run=dry_run)
+
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            future_to_path = {executor.submit(_worker, str(p)): p for p in audio_files}
+            for future in tqdm(as_completed(future_to_path), total=len(audio_files), desc="Preprocessing audio"):
+                info = future.result()
+                results.append(info)
 
     if report_path is None:
         report_path = output_root / "preprocess_report.json"
