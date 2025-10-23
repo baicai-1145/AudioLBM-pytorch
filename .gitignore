@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+data/VCTK-Corpus-0.92/
+data/processed/
+models/vae-debug/
+*.wav
+images/
+*.md
