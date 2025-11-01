@@ -1,0 +1,24 @@
+root: data/VCTK-Corpus-0.92
+outdir: preprocessed/VCTK48k
+sr: 48000
+segment_sec: 5.12
+hop_sec: 5.12     # 可设小于 5.12 以重叠
+random_offset: false
+jobs: 8
+seed: 1337
+min_src_sr: 32000
+# Curvature config
+sg_window: 101
+sg_poly: 3
+downsample: 4
+eps_sr: 1.0e-3
+energy_quantile: 0.97
+window_k: 5
+# Filter config
+filter_type: cheby1   # cheby1|butter|bessel|elliptic
+filter_order: 8
+filter_rp_db: 0.5
+filter_rs_db: 60.0
+metadata: metadata.jsonl
+limit: 0
+skip_existing: false

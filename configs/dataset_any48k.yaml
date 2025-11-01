@@ -1,0 +1,15 @@
+metadata: preprocessed/VCTK48k/metadata.jsonl
+target_sr: 48000
+segment_sec: 5.12
+seed: 1337
+normalize: true
+degrade:
+  cutoff_min_hz: 1000.0
+  cutoff_max_hz: 20000.0
+  filter_types: ["cheby1", "butter", "bessel", "elliptic"]
+  order_min: 2
+  order_max: 10
+  rp_db: 0.5
+  rs_db: 60.0
+f_target_bins_hz: [24000.0]  # any→48k
+

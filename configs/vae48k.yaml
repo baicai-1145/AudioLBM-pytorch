@@ -1,0 +1,44 @@
+data:
+  metadata: preprocessed/VCTK48k/metadata.jsonl
+  target_sr: 48000
+  segment_sec: 5.12
+  preload_workers: 8
+
+model:
+  channels: 64
+  hop: 512
+  win: 1024
+  hidden: 256
+
+loss:
+  mrstft_preset: A        # paper presets: A or B
+  l1_weight: 0.10
+  kl_weight: 0.0
+  hf_emphasis: 0.0        # keep 0 to stay paper-consistent
+  hf_freq: 6000
+
+optim_g:
+  type: adam
+  lr: 0.0002
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 0.0
+
+train:
+  outdir: exp/vae48k_paper_cfg
+  batch: 16
+  steps: 80000
+  warmup: 2000
+  log_every: 200
+  save_every: 5000
+  dump_every: 2000
+  ema: true
+  ema_decay: 0.999
+  device: auto
+  resume:
+
+scheduler:
+  type: cosine
+
+adv:
+  enabled: false          # no adversarial training in paper baseline

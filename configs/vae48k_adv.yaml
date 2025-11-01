@@ -1,0 +1,60 @@
+data:
+  metadata: preprocessed/VCTK48k/metadata.jsonl
+  target_sr: 48000
+  segment_sec: 5.12
+  preload_workers: 8
+
+model:
+  channels: 64
+  hop: 512
+  win: 1024
+  hidden: 256
+
+loss:
+  mrstft_preset: B        # higher freq resolution; keep A/B to stay close to paper
+  l1_weight: 0.08
+  kl_weight: 0.0
+  hf_emphasis: 0.0        # keep 0 to stay paper-consistent
+  hf_freq: 6000
+
+optim_g:
+  type: adam
+  lr: 0.0001              # your stable/ft setting
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 0.0
+
+optim_d:
+  type: adam
+  lr: 0.00005
+  beta1: 0.9
+  beta2: 0.999
+  weight_decay: 0.0
+
+train:
+  outdir: exp/vae48k_adv_paper_cfg
+  batch: 12
+  steps: 200000
+  warmup: 2000
+  log_every: 200
+  save_every: 5000
+  dump_every: 2000
+  ema: true
+  ema_decay: 0.999
+  device: auto
+  resume: exp/vae48k_adv_ft_from90000/ckpt_120000.pt
+
+scheduler:
+  type: none
+
+adv:
+  enabled: true
+  n_discriminators: 3
+  disc_base: 32
+  prewarm: 130000
+  adv_weight: 0.05
+  fm_weight: 0.3
+  adv_ramp: 40000
+  fm_ramp: 40000
+  d_steps: 1
+  r1_gamma: 0.001
